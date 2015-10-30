@@ -4,6 +4,7 @@ import logging
 import random
 import urllib
 import urllib2
+from minimalexample import todaysEvents
 
 # for sending images
 from PIL import Image
@@ -112,6 +113,9 @@ class WebhookHandler(webapp2.RequestHandler):
             elif text == '/stop':
                 reply('Bot disabled')
                 setEnabled(chat_id, False)
+            elif text == '/today':
+                urllib.urlcleanup()
+                reply(todayEvents[0])
             elif text == '/image':
                 img = Image.new('RGB', (512, 512))
                 base = random.randint(0, 16777216)
