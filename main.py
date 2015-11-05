@@ -4,7 +4,15 @@ import logging
 import random
 import urllib
 import urllib2
-from minimalexample import todaysEvents
+import random
+from json import loads
+from time import strptime, localtime
+import datetime
+
+if __import__('sys').version_info[0] == 2:
+    from urllib2 import urlopen
+else:
+    from urllib.request import urlopen
 
 # for sending images
 from PIL import Image
@@ -25,7 +33,6 @@ BASE_URL = 'https://api.telegram.org/bot' + TOKEN + '/'
 class EnableStatus(ndb.Model):
     # key name: str(chat_id)
     enabled = ndb.BooleanProperty(indexed=False, default=False)
-
 
 # ================================
 
@@ -114,8 +121,36 @@ class WebhookHandler(webapp2.RequestHandler):
                 reply('Bot disabled')
                 setEnabled(chat_id, False)
             elif text == '/today':
-                urllib.urlcleanup()
-                reply(todayEvents[0])
+                todayEvents = []
+                req = urlopen("http ://adigov. stud.if .ktu.lt/wordpress/?json=1".replace(' ', '')+'?'+str(random.random()))
+                content = req.read().decode("utf-8")
+                jsonObj = loads(content)
+                if jsonObj["status"] and jsonObj["status"] == "ok":
+                    posts = jsonObj["posts"]
+                    if posts:
+                        for post in posts:
+                            if post["categories"] and len(post["categories"]) > 0:
+                                category = post["categories"][0]
+                                parseTime = strptime(category["title"], "%m/%d/%Y")
+                                today = localtime()
+                                # Far shorter. :P
+                                if parseTime[:3] == today[:3]:
+                                    todayEvents.append(post["title"])
+                def concateEvents(todayEventsarg):
+                    if len(todayEventsarg) == 1:
+                        return ("Today there is one event:\n {0}".format(todayEventsarg[0]))
+                    elif len(todayEventsarg) > 1:
+                        concatString = "Today there are the following events:"
+                        for i in range(len(todayEventsarg)):
+                            concatString = "{0}\n{1}. {2}".format(concatString, (i+1), todayEventsarg[i])
+                        return concatString
+                    else:
+                        return "There are no Events today"
+                reply(concateEvents(todayEvents))
+            elif text == '/about':
+                reply('KTUeventBot : A simple free chat messenger bot to keep you updated on all events at KTU.\n\nKTUeventbot Version : 1 Release : 2\n\nSource code is availabe and open source on Github, type "/source" as command.\n\nCredits :GAE,  Members of HF,  Yukuku(Telebot starter Kit),  StackOverFlow,  My dear friend Hilko.')
+            elif text == '/time':
+                reply(datetime.datetime.now())
             elif text == '/image':
                 img = Image.new('RGB', (512, 512))
                 base = random.randint(0, 16777216)
@@ -124,13 +159,15 @@ class WebhookHandler(webapp2.RequestHandler):
                 output = StringIO.StringIO()
                 img.save(output, 'JPEG')
                 reply(img=output.getvalue())
+            elif text == '/source':
+                reply('www.goo.gl/O3wZtD')
             else:
                 reply('What command?')
 
         # CUSTOMIZE FROM HERE
 
         elif 'who are you' in text:
-            reply('telebot')
+            reply('telegrambot')
         elif 'what time' in text:
             reply('look at the top-right corner of your screen!')
         else:
