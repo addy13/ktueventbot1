@@ -7,7 +7,9 @@ import urllib2
 import random
 from json import loads
 from time import strptime, localtime
+import time
 import datetime
+from datetime import date, timedelta
 
 if __import__('sys').version_info[0] == 2:
     from urllib2 import urlopen
@@ -23,7 +25,7 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 import webapp2
 
-TOKEN = 'ENTER TOKEN HERE'
+TOKEN = 'Enter Token here'
 
 BASE_URL = 'https://api.telegram.org/bot' + TOKEN + '/'
 
@@ -148,9 +150,94 @@ class WebhookHandler(webapp2.RequestHandler):
                         return "There are no Events today"
                 reply(concateEvents(todayEvents))
             elif text == '/about':
-                reply('KTUeventBot : A simple free chat messenger bot to keep you updated on all events at KTU.\n\nKTUeventbot Version : 1 Release : 2\n\nSource code is availabe and open source on Github, type "/source" as command.\n\nCredits :GAE,  Members of HF,  Yukuku(Telebot starter Kit),  StackOverFlow,  My dear friend Hilko.')
-            elif text == '/time':
-                reply(datetime.datetime.now())
+                reply('KTUeventBot : A simple free chat messenger bot to keep you updated on all events at KTU.\n\nKTUeventbot Version : 1 Release : 2\n\nSource code is availabe and open source on Github, type "/source" as command.\n\nCredits :GAE,  Members of HF, Nathaniel, Steven,  Yukuku(Telebot starter Kit),  StackOverFlow,  My dear friend Hilko.')
+            elif text == '/week':
+                eventdaysofthisweek = []
+
+                one_day = datetime.timedelta(days=1)
+
+                def get_week(date):
+  #"""Return the full week (Sunday first) of the week containing the given date.
+
+  #'date' may be a datetime or date instance (the same type is returned).
+  #"""
+                  day_idx = (date.weekday() + 1) % 7  # turn sunday into 0, monday into 1, etc.
+                  sunday = date - datetime.timedelta(days=day_idx)
+                  date = sunday
+                  for n in xrange(7):
+                    yield date
+                    date += one_day
+                a = list(get_week(datetime.datetime.now().date()))
+                b = [d.isoformat() for d in get_week(datetime.datetime.now().date())]
+                daysofthisweek = []
+                daysofthisweek = b
+                for i in daysofthisweek:
+                    parsedate = strptime(i, "%Y-%m-%d")
+    
+                    req = urlopen("http ://adigov. stud.if .ktu.lt/wordpress/?json=1".replace(' ', '')+'?'+str(random.random()))
+                    content = req.read().decode("utf-8")
+                    jsonObj = loads(content)
+    
+                    if jsonObj["status"] and jsonObj["status"] == "ok":
+                        posts = jsonObj["posts"]
+                        if posts:
+                            for post in posts:
+                                if post["categories"] and len(post["categories"]) > 0:
+                                    category = post["categories"][0]
+                                    parseTime = strptime(category["title"], "%m/%d/%Y")
+                                    if parseTime == parsedate:
+                                        eventdaysofthisweek.append(post["title"]+" ("+(category["title"]+")"))
+                def concateweekEvents(eventdaysofthisweek):
+                    if len(eventdaysofthisweek) == 1:
+                        return ("Today there is one event this week:\n {0}".format(eventdaysofthisweek[0]))
+                    elif len(eventdaysofthisweek) > 1:
+                        concatweekString = "This week there are the following events:"
+                        for i in range(len(eventdaysofthisweek)):
+                            concatweekString = "{0}\n{1}. {2}".format(concatweekString,
+                                                      (i+1), eventdaysofthisweek[i])
+                        return concatweekString
+                    else:
+                        return "There are no Events this week"
+                reply(concateweekEvents(eventdaysofthisweek))
+            elif text == '/month':
+                eventdaysofthismonth = []
+                year = int(time.strftime("%Y"))
+                month = int(time.strftime("%m"))
+                date1 = datetime.date(year, month, 1)
+                if month+1 > 12:
+                    date2 = datetime.date(year+1, 1, 1)
+                else:
+                    date2 = datetime.date(year, month+1, 1)
+                delta = date2 - date1
+                monthdays = ["{:%d/%m/%Y}".format(date1 + datetime.timedelta(days=i)) for i in range(delta.days)]
+                
+                for i in monthdays:
+                    parsemonth = strptime(i, "%d/%m/%Y")
+                    req = urlopen("http ://adigov. stud.if .ktu.lt/wordpress/?json=1".replace(' ', '')+'?'+str(random.random()))
+                    content = req.read().decode("utf-8")
+                    jsonObj = loads(content)
+    
+                    if jsonObj["status"] and jsonObj["status"] == "ok":
+                        posts = jsonObj["posts"]
+                        if posts:
+                            for post in posts:
+                                if post["categories"] and len(post["categories"]) > 0:
+                                    category = post["categories"][0]
+                                    parseTime = strptime(category["title"], "%m/%d/%Y")
+                                    if parseTime == parsemonth:
+                                        eventdaysofthismonth.append(post["title"]+" ("+(category["title"])+")")
+                def concatemonthEvents(eventdaysofthismonth):
+                    if len(eventdaysofthismonth) == 1:
+                        return ("Today there is one event this month:\n {0}".format(eventdaysofthismonth[0]))
+                    elif len(eventdaysofthismonth) > 1:
+                        concatmonthString = "This month there are the following events:"
+                        for i in range(len(eventdaysofthismonth)):
+                            concatmonthString = "{0}\n{1}. {2}".format(concatmonthString,
+                                                      (i+1), eventdaysofthismonth[i])
+                        return concatmonthString
+                    else:
+                        return "There are no Events this month"
+                reply(concatemonthEvents(eventdaysofthismonth))
             elif text == '/image':
                 img = Image.new('RGB', (512, 512))
                 base = random.randint(0, 16777216)
@@ -168,6 +255,10 @@ class WebhookHandler(webapp2.RequestHandler):
 
         elif 'who are you' in text:
             reply('telegrambot')
+        elif 'who invented you' in text:
+            reply('My creator is Adithya :)')
+        elif 'Who invented you' in text:
+            reply('My creator is Adithya :)He is my god')
         elif 'what time' in text:
             reply('look at the top-right corner of your screen!')
         else:
